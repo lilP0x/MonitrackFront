@@ -24,15 +24,11 @@ export async function apiFetch(path, options = {}) {
   });
 
   if (res.status === 401 || res.status === 403) {
-    // token inválido/expirado: limpiar y forzar logout (puedes adaptar)
+    // token inválido/expirado: limpiar y propagar error para que la UI lo maneje
     localStorage.removeItem("token");
-    // redirigir a login si existe
-    try {
-      window.location.href = "/login";
-    } catch (e) {
-      // no navegador (tests) -- ignorar
-    }
-    throw new Error("Unauthorized");
+    const err = new Error("Unauthorized");
+    err.response = res;
+    throw err;
   }
 
   if (!res.ok) {
