@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "../style/ActiveTestUi.css";
+import { apiFetchJson, apiFetchText } from "../lib/apiFetch";
 
 function getUsernameFromToken(token) {
   if (!token) return "";
@@ -24,6 +25,13 @@ export default function ActiveTestUI() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    if (!token) {
+      // No token: redirigir a login o mostrar UI adecuada
+      try {
+        window.location.href = "/login";
+      } catch (e) {}
+      return;
+    }
     const username = getUsernameFromToken(token);
     setMonitor(username);
     setModalOpen(true);
@@ -35,26 +43,15 @@ export default function ActiveTestUI() {
     const payload = { topic };
 
     try {
-      const response = await fetch(
-        "http://localhost:8080/api/v1/mentoring-sessions/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
+      const data = await apiFetchJson(
+        "/api/v1/mentoring-sessions/create",
+        payload,
+        { method: "POST" }
       );
-      const data = await response.json().catch(() => ({}));
-      if (response.ok) {
-        setModalOpen(false);
-        setSessionId(data.id || data.sessionId || null);
-      } else {
-        alert("Error al crear la sesión: " + (data.message || response.status));
-      }
+      setModalOpen(false);
+      setSessionId(data.id || data.sessionId || null);
     } catch (error) {
-      alert("Error de red: " + error.message);
+      alert("Error al crear la sesión: " + (error.message || error));
     }
   };
 
@@ -72,27 +69,14 @@ export default function ActiveTestUI() {
     };
 
     try {
-      const response = await fetch(
-        "http://localhost:8080/api/v1/mentoring-sessions/add-student", // Ajusta la URL según tu backend
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-      const data = await response.json().catch(() => ({}));
-      if (response.ok) {
-        setStudents([...students, { id, name }]);
-        setStudentIdInput("");
-        setStudentNameInput("");
-      } else {
-        alert("Error al agregar estudiante: " + (data.message || response.status));
-      }
+      await apiFetchJson("/api/v1/mentoring-sessions/add-student", payload, {
+        method: "POST",
+      });
+      setStudents([...students, { id, name }]);
+      setStudentIdInput("");
+      setStudentNameInput("");
     } catch (error) {
-      alert("Error de red: " + error.message);
+      alert("Error al agregar estudiante: " + (error.message || error));
     }
   };
 
@@ -101,25 +85,14 @@ export default function ActiveTestUI() {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/v1/mentoring-sessions/${parseInt(sessionId, 10)}/bitacora`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "text/plain",
-            Authorization: `Bearer ${token}`,
-          },
-          body: bitacora, // <-- solo el texto, no JSON.stringify
-        }
+      await apiFetchText(
+        `/api/v1/mentoring-sessions/${parseInt(sessionId, 10)}/bitacora`,
+        bitacora,
+        { method: "PUT" }
       );
-      if (response.ok) {
-        alert("Bitácora guardada correctamente");
-      } else {
-        const data = await response.text();
-        alert("Error al guardar bitácora: " + data);
-      }
+      alert("Bitácora guardada correctamente");
     } catch (error) {
-      alert("Error de red: " + error.message);
+      alert("Error al guardar bitácora: " + (error.message || error));
     }
   };
 
