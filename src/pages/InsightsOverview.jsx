@@ -87,28 +87,21 @@ export default function InsightsOverview() {
         <>
           <div className="cards">
             <div className="card">
-              <h4>Total sesiones</h4>
-              <div className="value">{overview.totalSessions ?? 0}</div>
+              <h4>Duración media sesión (min)</h4>
+              <div className="value">{Number(overview.avgSessionDurationMinutes ?? 0).toFixed(1)}</div>
             </div>
             <div className="card">
-              <h4>Sesiones este mes</h4>
-              <div className="value">{overview.sessionsThisMonth ?? 0}</div>
+              <h4>Sesiones esta semana</h4>
+              <div className="value">{overview.sessionsThisWeek ?? 0}</div>
             </div>
             <div className="card">
-              <h4>Monitores activos</h4>
-              <div className="value">{overview.totalMonitors ?? 0}</div>
+              <h4>Monitor top</h4>
+              <div className="value">{overview.topMonitorName ?? '-'}</div>
+              <div className="subvalue">Sesiones: {overview.topMonitorSessions ?? 0}</div>
             </div>
             <div className="card">
-              <h4>Promedio estudiantes</h4>
-              <div className="value">
-                {Number(overview.avgStudentsPerSession ?? 0).toFixed(2)}
-              </div>
-            </div>
-            <div className="card">
-              <h4>Duración media (min)</h4>
-              <div className="value">
-                {Number(overview.avgDurationMinutes ?? 0).toFixed(1)}
-              </div>
+              <h4>Promedio estudiantes/sesión</h4>
+              <div className="value">{Number(overview.avgStudentsPerSession ?? 0).toFixed(2)}</div>
             </div>
           </div>
 

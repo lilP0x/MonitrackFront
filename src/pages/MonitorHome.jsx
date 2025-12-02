@@ -12,7 +12,7 @@ function getUsernameFromToken(token) {
   }
 }
 
-export default function ActiveTestUI() {
+export default function MonitorHome() {
   const [monitor, setMonitor] = useState("");
   const [topic, setTopic] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -80,14 +80,20 @@ export default function ActiveTestUI() {
     const tokenDebug = localStorage.getItem("token");
     console.debug("[addStudent] token present:", !!tokenDebug);
     try {
+
+
       const sid = parseInt(sessionId, 10);
       // prefer numeric studentId if user entered digits
       const studentIdVal = /^\d+$/.test(id) ? parseInt(id, 10) : id;
       const payload = { sessionId: sid, id: studentIdVal, name: name };
-  console.debug("[addStudent] payload:", payload);
-  setLastRequest({ url: "/api/v1/mentoring-sessions/add-student", payload });
-  const res = await apiFetchJson("/api/v1/mentoring-sessions/add-student", payload, { method: "POST" });
-  setLastResponse({ status: 200, body: res });
+
+      
+      console.debug("[addStudent] payload:", payload);
+      setLastRequest({ url: "/api/v1/mentoring-sessions/add-student", payload });
+      const res = await apiFetchJson("/api/v1/mentoring-sessions/add-student", payload, { method: "POST" });
+
+      console.debug("[addStudent] response:", res);
+      setLastResponse({ status: 200, body: res });
       setStudents((s) => [...s, { id, name }]);
       setStudentIdInput("");
       setStudentNameInput("");
@@ -119,15 +125,21 @@ export default function ActiveTestUI() {
     const tokenDebug = localStorage.getItem("token");
     console.debug("[saveBitacora] token present:", !!tokenDebug);
     try {
-  const url = `/api/v1/mentoring-sessions/${parseInt(sessionId, 10)}/bitacora`;
-  console.debug("[saveBitacora] url:", url, "body:", bitacora.trim());
-  setLastRequest({ url, payload: bitacora.trim() });
-  const res = await apiFetchText(url, bitacora.trim(), { method: "PUT" });
-  setLastResponse({ status: 200, body: res });
+      const url = `/api/v1/mentoring-sessions/${parseInt(sessionId, 10)}/bitacora`;
+
+      console.debug("[saveBitacora] url:", url, "body:", bitacora.trim());
+
+      setLastRequest({ url, payload: bitacora.trim() });
+      const res = await apiFetchText(url, bitacora.trim(), { method: "PUT" });
+
+      setLastResponse({ status: 200, body: res });
       setBitacora("");
       setSuccessMsg("Bitácora guardada");
       setTimeout(() => setSuccessMsg(null), 2000);
+      
     } catch (err) {
+
+
       console.error(err);
       const status = err?.response?.status;
       const bodyMsg = err?.body?.message || err?.body || null;
@@ -138,6 +150,31 @@ export default function ActiveTestUI() {
       } else {
         setError(err.message || "Error guardando bitácora");
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleFinishSession = async () => {
+    if (!sessionId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      setLastRequest({ url: `/api/v1/mentoring-sessions/${sessionId}/finish` });
+      const res = await apiFetchJson(`/api/v1/mentoring-sessions/${sessionId}/finish`, null, { method: "PUT" });
+      setLastResponse({ status: 200, body: res });
+      setSuccessMsg("Sesión finalizada");
+      setSessionId(null);
+      setStudents([]);
+      setTopic("");
+      setTimeout(() => {
+        setSuccessMsg(null);
+        window.location.href = "/login";
+      }, 1200);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Error al finalizar la sesión");
     } finally {
       setLoading(false);
     }
@@ -210,19 +247,12 @@ export default function ActiveTestUI() {
             <h3>Información</h3>
             <p className="muted">Aquí puedes crear una sesión con el tema, añadir estudiantes uno a uno y guardar la bitácora en cualquier momento.</p>
             <div className="info-actions">
-              <button className="btn" onClick={() => { setSessionId(null); setStudents([]); setTopic(""); }}>Finalizar sesión</button>
+              <button className="btn" onClick={handleFinishSession} disabled={loading || !sessionId}>Finalizar sesión</button>
             </div>
           </aside>
         </div>
       </main>
-      {/* Debug panel (visible while developing) */}
-      <div className="card" style={{ marginTop: 14 }}>
-        <h4>Debug</h4>
-        <div style={{ fontSize: 13, color: '#065f46' }}>
-          <div><strong>Last request:</strong> {lastRequest ? JSON.stringify(lastRequest) : '—'}</div>
-          <div style={{ marginTop: 6 }}><strong>Last response:</strong> {lastResponse ? JSON.stringify(lastResponse) : '—'}</div>
-        </div>
-      </div>
+     
     </div>
   );
 }
